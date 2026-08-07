@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 <title>釜山 · 2026</title>
 <style>
@@ -151,7 +151,7 @@
 
   <nav data-tabs="" style="position: sticky; top: 0; z-index: 5; background: rgba(248,240,223,0.96); backdrop-filter: blur(8px); border-bottom: 1px solid #ddd8ce; display: flex; gap: 0.125rem; padding: 0.5rem 0.75rem; overflow-x: auto; scrollbar-width: none;"></nav>
 
-  <div data-track="" style="flex: 0 0 auto; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none;"></div>
+  <div data-track="" style="flex: 0 0 auto; display: flex; align-items: flex-start; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none;"></div>
 
 </div>
 
@@ -874,7 +874,9 @@
   function measureFit(panel) {
     var prev = track.style.height;
     track.style.height = 'auto';
-    var content = panel.scrollHeight;
+    // align-items: flex-start keeps panels from stretching to the tallest one,
+    // so this is the panel's own content height.
+    var content = panel.offsetHeight;
     track.style.height = prev;
     void track.offsetHeight;
     track.style.height = Math.max(240, content) + 'px';
