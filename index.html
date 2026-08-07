@@ -22,6 +22,11 @@
      460 * 0.034783 = 16. */
   html { font-size: clamp(7px, 3.4783vw, 16px); }
   html, body { margin: 0; padding: 0; background: #ece2cf; }
+  /* Below the shell's own width there is no framing margin left, so the darker
+     page ground only ever shows as a strip under short panels. Match the shell. */
+  @media (max-width: 460px) {
+    html, body { background: #f8f0df; }
+  }
   * { box-sizing: border-box; }
   a { color: #3f5d78; text-decoration: none; }
   a:hover { color: #23201c; text-decoration: underline; }
