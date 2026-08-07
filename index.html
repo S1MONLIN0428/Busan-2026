@@ -58,11 +58,17 @@
      inside it are one movement, not two. */
   [data-track] { transition: height 340ms var(--e); }
   [data-panel] { transition: opacity 260ms var(--t); }
+  /* The arriving-panel fade is a keyframe, not an inline opacity flip: an
+     animation always leaves the element at its resting opacity even if frames
+     are starved (backgrounded tab, locked screen), where a JS restore wouldn't.
+     It starts at 0.35 rather than 0 so that even a stalled timeline leaves the
+     itinerary legible instead of blank. */
+  @keyframes panel-in { from { opacity: 0.35; } to { opacity: 1; } }
   [data-naver] { transition: background-color 180ms var(--t), border-color 180ms var(--t), transform 200ms var(--e); }
   [data-naver]:active { transform: scale(0.97); }
   [data-naver]:active { background-color: #e7e0d2; border-color: #a29a8e; }
   @media (prefers-reduced-motion: reduce) {
-    * { transition-duration: 1ms !important; scroll-behavior: auto !important; }
+    * { transition-duration: 1ms !important; animation-duration: 1ms !important; scroll-behavior: auto !important; }
   }
   .f-kr { font-family: 'Noto Serif KR','Noto Serif','Apple SD Gothic Neo','Malgun Gothic',serif; }
   /* Everything stays on one line except addresses, which are free to wrap.
@@ -848,12 +854,16 @@
     // mid-animation), so the arriving panel fades in to cover the cut.
     var panel = track.children[i];
     if (panel) {
-      panel.style.transition = 'none';
-      panel.style.opacity = '0';
-      requestAnimationFrame(function () {
-        panel.style.transition = '';
-        panel.style.opacity = '1';
-      });
+      panel.style.animation = 'none';
+      void panel.offsetWidth;
+      panel.style.animation = 'panel-in 260ms var(--t)';
+      // setTimeout still fires in a hidden document, where the animation's own
+      // timeline does not. Clearing the shorthand drops back to opacity 1.
+      if (panel._fade) clearTimeout(panel._fade);
+      panel._fade = setTimeout(function () {
+        panel._fade = null;
+        panel.style.animation = '';
+      }, 400);
     }
   }
 
@@ -888,9 +898,14 @@
   // Grow the track at the same time as the collapsible, not after it. Waiting
   // for the list to finish made every expand read as two separate movements.
   function toggleBoxAndFit(box, open) {
-    var before = track.getBoundingClientRect().height;
+    var panel = track.children[active > 0 ? active : 0];
+    // Measure the panel before toggling, and measure the panel rather than the
+    // track: the track may already sit a few px off its content, and inheriting
+    // that error costs a second little move once fitHeight corrects it.
+    var before = panel ? panel.offsetHeight : 0;
     var delta = toggleBox(box, open);
-    track.style.height = Math.max(240, before + (open ? delta : -delta)) + 'px';
+    var target = before + (open ? delta : -delta);
+    track.style.height = Math.max(240, target) + 'px';
     if (track._fit) clearTimeout(track._fit);
     track._fit = setTimeout(function () { track._fit = null; fitHeight(); }, 380);
   }
