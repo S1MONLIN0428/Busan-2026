@@ -793,6 +793,8 @@
   }
   refreshRate();
 
+  // Visual only — no layout writes, so this is safe to call on every scroll
+  // tick. Anything that changes geometry lives in afterSettle().
   function setActive(i) {
     if (i === active) return;
     active = i;
@@ -810,28 +812,25 @@
         behavior: 'smooth'
       });
     }
+  }
+
+  // Runs only once the track has come to rest. Resizing the track or moving a
+  // scroll position mid-flight makes Safari re-snap, which fires scroll again.
+  function afterSettle(i) {
     // Each panel keeps its own vertical scroll, so arriving at one you have
     // already read would drop you mid-list. Start every page at the top.
     var panel = track.children[i];
     if (panel) panel.scrollTop = 0;
     if (window.scrollY) window.scrollTo(0, 0);
-    // Never resize the track from inside a scroll event: the height change
-    // makes Safari re-snap, which fires scroll again. Defer a frame.
-    requestAnimationFrame(fitHeight);
+    fitHeight();
   }
 
-  // Programmatic smooth scroll: remember where we're headed so the settle
-  // handler ignores every intermediate position it samples on the way.
-  var pendingTarget = -1, pendingT = null;
+  // Instant, not smooth: a snap container cannot survive a height change while
+  // an animated scroll is in flight, and afterSettle() changes the height.
   function scrollToPanel(i) {
-    // A long jump animates for over a second and stalls in bursts, which the
-    // settle handler would misread as arrivals. Jump those instantly.
-    var far = Math.abs(i - (active > 0 ? active : 0)) > 1;
-    pendingTarget = i;
-    if (pendingT) clearTimeout(pendingT);
-    pendingT = setTimeout(function () { pendingT = null; pendingTarget = -1; }, 1600);
-    track.scrollTo({ left: track.clientWidth * i, behavior: far ? 'auto' : 'smooth' });
+    track.scrollLeft = track.clientWidth * i;
     setActive(i);
+    afterSettle(i);
   }
 
   // Collapsibles animate between 0 and their measured height, then release the
@@ -863,16 +862,24 @@
   // The track is as tall as the panel you're on, capped at the viewport, so a
   // short panel doesn't leave a stretch of empty cream below it.
   var fitting = false;
+  function inputFocused() {
+    var a = document.activeElement;
+    return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'));
+  }
   function fitHeight() {
     if (fitting) return;
+    // iOS shrinks the visual viewport when the keyboard opens. Measuring then
+    // caps the track to the keyboard-sized gap and clips the list.
+    if (inputFocused()) return;
     var panel = track.children[active > 0 ? active : 0];
     if (!panel) return;
     fitting = true;
     try { measureFit(panel); } finally { fitting = false; }
   }
   function measureFit(panel) {
-    var top = track.getBoundingClientRect().top + (window.scrollY || 0);
-    var avail = Math.max(240, window.innerHeight - top);
+    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    var top = Math.max(0, track.getBoundingClientRect().top);
+    var avail = Math.max(240, vh - top);
     var prev = track.style.height;
     track.style.height = 'auto';
     var content = panel.scrollHeight;
@@ -881,13 +888,17 @@
     track.style.height = Math.max(240, Math.min(content, avail)) + 'px';
   }
 
-  // iOS Safari fires resize as the URL bar collapses mid-scroll; resizing the
-  // track there would restart the same snap loop. Debounce.
   var resizeT = null;
-  window.addEventListener('resize', function () {
+  function refit() {
     if (resizeT) clearTimeout(resizeT);
     resizeT = setTimeout(function () { resizeT = null; fitHeight(); }, 150);
-  });
+  }
+  // iOS Safari fires resize as the URL bar collapses mid-scroll; resizing the
+  // track there would restart the same snap loop. Debounce.
+  window.addEventListener('resize', refit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
+  // Dismissing the keyboard is the moment the real available height is known.
+  track.addEventListener('focusout', function () { setTimeout(fitHeight, 300); });
 
   function repaintPackGroup(gi) {
     var box = track.querySelector('[data-pack-group="' + gi + '"]');
@@ -917,26 +928,16 @@
     }
   });
 
-  // Only react once the swipe has settled. Reading layout on every scroll tick
-  // fights the snap and pins the main thread.
+  // The pill follows the swipe immediately (cheap, no layout writes); the
+  // geometry work waits until the scroll has come to rest.
   var settle = null;
   track.addEventListener('scroll', function () {
     if (!track.clientWidth) return;
+    var i = Math.round(track.scrollLeft / track.clientWidth);
+    if (!Number.isFinite(i)) return;
+    setActive(Math.max(0, Math.min(track.children.length - 1, i)));
     if (settle) clearTimeout(settle);
-    settle = setTimeout(function () {
-      settle = null;
-      if (!track.clientWidth) return;
-      var i = Math.round(track.scrollLeft / track.clientWidth);
-      if (!Number.isFinite(i)) return;
-      i = Math.max(0, Math.min(track.children.length - 1, i));
-      // Mid-flight sample of a programmatic scroll — not an arrival.
-      if (pendingTarget >= 0) {
-        if (i !== pendingTarget) return;
-        pendingTarget = -1;
-        if (pendingT) { clearTimeout(pendingT); pendingT = null; }
-      }
-      setActive(i);
-    }, 140);
+    settle = setTimeout(function () { settle = null; afterSettle(active > 0 ? active : 0); }, 180);
   }, { passive: true });
 
   track.addEventListener('input', function (e) {
