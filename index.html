@@ -33,23 +33,33 @@
   button { color: #23201c; font-family: inherit; -webkit-text-size-adjust: 100%; }
   a[x-apple-data-detectors], [data-shell] a[href^="x-apple-data-detectors"] { color: inherit !important; text-decoration: none !important; font: inherit !important; }
   [data-track]::-webkit-scrollbar, [data-tabs]::-webkit-scrollbar { display: none; }
-  /* One easing for the whole page. 'ease' ramps in and out symmetrically, which
-     reads as a nudge rather than a jump at these short durations. */
-  [data-tab] { transition: background-color 220ms ease, color 220ms ease; }
-  [data-check] { transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease; }
+  /* Two easings for the whole page. --e decelerates hard: fast off the mark,
+     long settle, which is what makes a size change read as motion rather than a
+     jump. --t is for tints, where a symmetric ramp is fine. */
+  :root { --e: cubic-bezier(0.32, 0.72, 0, 1); --t: cubic-bezier(0.4, 0, 0.2, 1); }
+  [data-tab] { transition: background-color 200ms var(--t), color 200ms var(--t); }
+  [data-check] { transition: background-color 200ms var(--t), border-color 200ms var(--t), transform 220ms var(--e); }
   [data-check]:active { transform: scale(0.88); }
-  [data-time], [data-name] { transition: color 260ms ease; }
+  [data-time], [data-name] { transition: color 260ms var(--t); }
   [data-subs-caret], [data-day-caret], [data-pack-caret] {
-    transition: transform 220ms ease;
+    transition: transform 320ms var(--e);
     display: inline-flex; align-items: center; justify-content: center;
     width: 12px; height: 12px; line-height: 1;
     transform-origin: 50% 50%;
   }
-  /* The collapsible bodies animate their own max-height in script; opacity is
-     shortened so content fades in after the box has begun to open. */
-  [data-subs], [data-day-list], [data-pack-list] { overflow: hidden; transition: max-height 260ms ease, opacity 180ms ease; }
-  [data-track] { transition: height 260ms ease; }
-  [data-naver] { transition: background-color 180ms ease, border-color 180ms ease; }
+  /* The collapsible bodies animate their own max-height in script. The content
+     slides down from a few px up as it fades, so the reveal has a direction; the
+     fade is shorter so it lands before the box stops growing. */
+  [data-subs], [data-day-list], [data-pack-list] {
+    overflow: hidden;
+    transition: max-height 340ms var(--e), opacity 200ms var(--t), transform 340ms var(--e);
+  }
+  /* Same duration and easing as the collapsibles: the outer box and the list
+     inside it are one movement, not two. */
+  [data-track] { transition: height 340ms var(--e); }
+  [data-panel] { transition: opacity 260ms var(--t); }
+  [data-naver] { transition: background-color 180ms var(--t), border-color 180ms var(--t), transform 200ms var(--e); }
+  [data-naver]:active { transform: scale(0.97); }
   [data-naver]:active { background-color: #e7e0d2; border-color: #a29a8e; }
   @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 1ms !important; scroll-behavior: auto !important; }
@@ -834,27 +844,55 @@
     track.scrollLeft = track.clientWidth * i;
     setActive(i);
     afterSettle(i);
+    // A tab tap jumps instantly (a snap container can't survive a height change
+    // mid-animation), so the arriving panel fades in to cover the cut.
+    var panel = track.children[i];
+    if (panel) {
+      panel.style.transition = 'none';
+      panel.style.opacity = '0';
+      requestAnimationFrame(function () {
+        panel.style.transition = '';
+        panel.style.opacity = '1';
+      });
+    }
   }
 
   // Collapsibles animate between 0 and their measured height, then release the
   // cap so later content changes don't get clipped.
   function toggleBox(box, open) {
     if (box._t) clearTimeout(box._t);
+    var h;
     if (open) {
       box.style.display = 'flex';
       box.style.maxHeight = '0px';
       box.style.opacity = '0';
+      box.style.transform = 'translateY(-6px)';
       void box.offsetHeight;
-      box.style.maxHeight = box.scrollHeight + 'px';
+      h = box.scrollHeight;
+      box.style.maxHeight = h + 'px';
       box.style.opacity = '1';
-      box._t = setTimeout(function () { box.style.maxHeight = 'none'; }, 280);
+      box.style.transform = 'translateY(0)';
+      box._t = setTimeout(function () { box.style.maxHeight = 'none'; }, 360);
     } else {
-      box.style.maxHeight = box.scrollHeight + 'px';
+      h = box.scrollHeight;
+      box.style.maxHeight = h + 'px';
       void box.offsetHeight;
       box.style.maxHeight = '0px';
       box.style.opacity = '0';
-      box._t = setTimeout(function () { box.style.display = 'none'; }, 280);
+      box.style.transform = 'translateY(-6px)';
+      box._t = setTimeout(function () { box.style.display = 'none'; }, 360);
     }
+    return h;
+  }
+
+  // Grow the track at the same time as the collapsible, not after it. Waiting
+  // for the list to finish made every expand read as two separate movements.
+  function toggleBoxAndFit(box, open) {
+    var before = track.getBoundingClientRect().height;
+    var delta = toggleBox(box, open);
+    track.style.height = Math.max(240, before + (open ? delta : -delta)) + 'px';
+    if (track._fit) clearTimeout(track._fit);
+    track._fit = setTimeout(function () { track._fit = null; fitHeight(); }, 380);
   }
 
   nav.addEventListener('click', function (e) {
@@ -1005,9 +1043,8 @@
       var box = track.querySelector('[data-subs="' + sKey + '"]');
       var caret = subs.querySelector('[data-subs-caret]');
       var open = box.style.display === 'none';
-      toggleBox(box, open);
+      toggleBoxAndFit(box, open);
       caret.style.transform = open ? 'rotate(45deg)' : 'rotate(0deg)';
-      setTimeout(fitHeight, 290);
       return;
     }
 
@@ -1018,9 +1055,8 @@
       var pCaret = track.querySelector('[data-pack-caret="' + pi + '"]');
       var pOpen = pList.style.display === 'none';
       openPack[pi] = pOpen;
-      toggleBox(pList, pOpen);
+      toggleBoxAndFit(pList, pOpen);
       pCaret.style.transform = pOpen ? 'rotate(45deg)' : 'rotate(0deg)';
-      setTimeout(fitHeight, 290);
       return;
     }
 
@@ -1030,9 +1066,8 @@
       var list = track.querySelector('[data-day-list="' + di + '"]');
       var dCaret = track.querySelector('[data-day-caret="' + di + '"]');
       var dOpen = list.style.display === 'none';
-      toggleBox(list, dOpen);
+      toggleBoxAndFit(list, dOpen);
       dCaret.style.transform = dOpen ? 'rotate(45deg)' : 'rotate(0deg)';
-      setTimeout(fitHeight, 290);
     }
   });
 
