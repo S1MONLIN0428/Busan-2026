@@ -124,10 +124,7 @@
   var el = document.querySelector('[data-intro]');
   if (!el) return;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var seen;
-  try { seen = sessionStorage.getItem('busan-intro-seen'); } catch (e) { seen = null; }
-  if (seen || reduce) { el.parentNode.removeChild(el); return; }
-  try { sessionStorage.setItem('busan-intro-seen', '1'); } catch (e) {}
+  if (reduce) { el.parentNode.removeChild(el); return; }
   el.style.display = 'block';
   document.documentElement.style.overflow = 'hidden';
   var done = false;
@@ -823,8 +820,17 @@
     requestAnimationFrame(fitHeight);
   }
 
+  // Programmatic smooth scroll: remember where we're headed so the settle
+  // handler ignores every intermediate position it samples on the way.
+  var pendingTarget = -1, pendingT = null;
   function scrollToPanel(i) {
-    track.scrollTo({ left: track.clientWidth * i, behavior: 'smooth' });
+    // A long jump animates for over a second and stalls in bursts, which the
+    // settle handler would misread as arrivals. Jump those instantly.
+    var far = Math.abs(i - (active > 0 ? active : 0)) > 1;
+    pendingTarget = i;
+    if (pendingT) clearTimeout(pendingT);
+    pendingT = setTimeout(function () { pendingT = null; pendingTarget = -1; }, 1600);
+    track.scrollTo({ left: track.clientWidth * i, behavior: far ? 'auto' : 'smooth' });
     setActive(i);
   }
 
@@ -923,6 +929,12 @@
       var i = Math.round(track.scrollLeft / track.clientWidth);
       if (!Number.isFinite(i)) return;
       i = Math.max(0, Math.min(track.children.length - 1, i));
+      // Mid-flight sample of a programmatic scroll — not an arrival.
+      if (pendingTarget >= 0) {
+        if (i !== pendingTarget) return;
+        pendingTarget = -1;
+        if (pendingT) { clearTimeout(pendingT); pendingT = null; }
+      }
       setActive(i);
     }, 140);
   }, { passive: true });
