@@ -389,7 +389,7 @@
   }
 
   // ---- markup -------------------------------------------------------------
-  var PANEL = 'flex: 0 0 100%; width: 100%; scroll-snap-align: start; overflow-y: auto; padding: 20px 22px 24px;';
+  var PANEL = 'flex: 0 0 100%; width: 100%; scroll-snap-align: start; padding: 20px 22px 24px;';
   var EYEBROW = 'font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a8378;';
 
   function overviewPanel() {
@@ -814,13 +814,11 @@
     }
   }
 
-  // Runs only once the track has come to rest. Resizing the track or moving a
-  // scroll position mid-flight makes Safari re-snap, which fires scroll again.
+  // Runs only once the track has come to rest. Resizing the track mid-flight
+  // makes Safari re-snap, which fires scroll again.
   function afterSettle(i) {
-    // Each panel keeps its own vertical scroll, so arriving at one you have
-    // already read would drop you mid-list. Start every page at the top.
-    var panel = track.children[i];
-    if (panel) panel.scrollTop = 0;
+    // Panels no longer scroll internally, so arriving at one means starting the
+    // page at its top.
     if (window.scrollY) window.scrollTo(0, 0);
     fitHeight();
   }
@@ -861,31 +859,25 @@
 
   // The track is as tall as the panel you're on, capped at the viewport, so a
   // short panel doesn't leave a stretch of empty cream below it.
+  // The track is exactly as tall as the panel you're on — no viewport cap, so
+  // there is no height to get wrong when the keyboard or the URL bar resizes
+  // the visible area. Long panels scroll the page; short ones stay short, which
+  // is what keeps a stretch of empty cream from showing below them.
   var fitting = false;
-  function inputFocused() {
-    var a = document.activeElement;
-    return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'));
-  }
   function fitHeight() {
     if (fitting) return;
-    // iOS shrinks the visual viewport when the keyboard opens. Measuring then
-    // caps the track to the keyboard-sized gap and clips the list.
-    if (inputFocused()) return;
     var panel = track.children[active > 0 ? active : 0];
     if (!panel) return;
     fitting = true;
     try { measureFit(panel); } finally { fitting = false; }
   }
   function measureFit(panel) {
-    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    var top = Math.max(0, track.getBoundingClientRect().top);
-    var avail = Math.max(240, vh - top);
     var prev = track.style.height;
     track.style.height = 'auto';
     var content = panel.scrollHeight;
     track.style.height = prev;
     void track.offsetHeight;
-    track.style.height = Math.max(240, Math.min(content, avail)) + 'px';
+    track.style.height = Math.max(240, content) + 'px';
   }
 
   var resizeT = null;
@@ -893,12 +885,9 @@
     if (resizeT) clearTimeout(resizeT);
     resizeT = setTimeout(function () { resizeT = null; fitHeight(); }, 150);
   }
-  // iOS Safari fires resize as the URL bar collapses mid-scroll; resizing the
-  // track there would restart the same snap loop. Debounce.
+  // Width changes reflow the content, which changes its height. Debounced so
+  // the iOS URL-bar collapse mid-scroll can't restart a snap loop.
   window.addEventListener('resize', refit);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
-  // Dismissing the keyboard is the moment the real available height is known.
-  track.addEventListener('focusout', function () { setTimeout(fitHeight, 300); });
 
   function repaintPackGroup(gi) {
     var box = track.querySelector('[data-pack-group="' + gi + '"]');
