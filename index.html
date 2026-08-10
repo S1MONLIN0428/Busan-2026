@@ -214,8 +214,9 @@
         { zh: 'Flipbook Studio 手翻書', ko: '움직이는 사진상점', addr: '부산광역시 사하구 감내2로 170-1', naver: 'https://naver.me/Fx215lKO' },
       ] },
       { t: '13:24', zh: '影島海女村', naver: 'https://naver.me/x0OH1iGy', ko: '영도해녀촌', addr: '부산광역시 영도구 중리남로 2-35', dur: 60, leg: 25, won: 25000, taxi: 10600 },
-      { t: '14:37', zh: '白淺灘文化村', naver: 'https://naver.me/F93DmOl2', ko: '흰여울문화마을', dur: 180, leg: 10, taxi: 6200 },
-      { t: '17:37', zh: 'Aether', naver: 'https://naver.me/GrgnBgcC', ko: '에테르', addr: '부산 영도구 절영로 234', hours: '每日 10:00–21:00', dur: 0, won: 20000 },
+      { t: '14:37', zh: '白淺灘文化村', naver: 'https://naver.me/F93DmOl2', ko: '흰여울문화마을', dur: 180, leg: 10, taxi: 6200, subsLabel: '順路一站 · Aether', subs: [
+        { zh: 'Aether', ko: '에테르', addr: '부산 영도구 절영로 234 · 每日 10:00–21:00', naver: 'https://naver.me/GrgnBgcC', won: 20000 }
+      ] },
       { t: '18:01', zh: '扎嘎其市場', naver: 'https://naver.me/5FDTgY6J', ko: '자갈치시장', dur: 90, leg: 18, won: 60000, taxi: 7900 },
       { t: '20:50', zh: '回 Airbnb', ko: '', dur: 0, leg: 12, taxi: 5100 }
     ] },
@@ -367,6 +368,22 @@
 
       var meta = s.note || (durText(s.dur) ? '停留 ' + durText(s.dur) : '');
 
+      // A sub-stop can carry its own cost (a café folded under the stop it sits
+      // beside). It counts once, here, so the parent row's figure stays honest.
+      var subs = (s.subs || []).map(function (x) {
+        var sw = x.won || 0;
+        var subNt = (x.shared ? sw / SPLIT : sw) * RATE;
+        if (sw) {
+          dSpend += subNt;
+          if (!s.noCount) { spend += subNt; total += subNt; }
+        }
+        return {
+          zh: x.zh, ko: x.ko || '', addr: x.addr || '', naver: x.naver || '',
+          wonText: sw ? won(sw) : '',
+          ntText: subNt ? nt(subNt) + ' / 人' : ''
+        };
+      });
+
       return {
         key: di + ':' + si,
         time: s.t,
@@ -376,10 +393,8 @@
         hours: s.hours || '',
         meta: meta,
         metaColor: s.note ? '#6d675e' : '#8a8378',
-        subs: (s.subs || []).map(function (x) {
-          return { zh: x.zh, ko: x.ko || '', addr: x.addr || '', naver: x.naver || '' };
-        }),
-        subsLabel: s.subs ? '推薦去處 ' + s.subs.length + ' 處' : '',
+        subs: subs,
+        subsLabel: s.subs ? (s.subsLabel || '推薦去處 ' + s.subs.length + ' 處') : '',
         naverUrl: naverLink(s),
         hasLeg: SHOW_TRANSIT && (!!s.leg || !!s.taxiText),
         leg: s.leg ? s.leg + ' 分' : '',
@@ -491,7 +506,8 @@
 
       var subs = s.subs.map(function (sub) {
         return '' +
-          '<div style="display: flex; flex-direction: column; gap: 1px;">' +
+          '<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">' +
+          '<div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">' +
             '<div style="font-size: 14px; line-height: 1.3;">' + esc(sub.zh) + '</div>' +
             (sub.ko ? '<div class="f-kr" style="font-size: 12px; color: #4a453d;">' + esc(sub.ko) + '</div>' : '') +
             (sub.addr ? '<div class="f-kr addr" style="font-size: 12px; color: #3d3831; line-height: 1.4;">' + esc(sub.addr) + '</div>' : '') +
@@ -499,6 +515,12 @@
               '<div style="display: flex; gap: 6px; margin-top: 4px;">' +
                 '<a href="' + esc(sub.naver) + '" data-naver="" target="_blank" rel="noopener" style="font-size: 11px; letter-spacing: 0.04em; color: #3d3831; border: 1px solid #cfc8bb; border-radius: 999px; padding: 3px 9px; line-height: 1.3;">Naver</a>' +
               '</div>' : '') +
+          '</div>' +
+          (sub.wonText ?
+            '<div style="text-align: right; white-space: nowrap;">' +
+              '<div style="font-size: 13px; font-weight: 600;">' + esc(sub.wonText) + '</div>' +
+              '<div style="font-size: 10px; color: #8a8378;">' + esc(sub.ntText) + '</div>' +
+            '</div>' : '') +
           '</div>';
       }).join('');
 
