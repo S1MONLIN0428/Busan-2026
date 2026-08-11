@@ -205,7 +205,7 @@
     ] },
     { label: 'Day 2', dateShort: '8/17', dow: '一', headline: '松島纜車 · 甘川洞 · 扎嘎其', stops: [
       { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
-      { t: '09:31', zh: '松島海上纜車 起站', naver: 'https://naver.me/5T0cslkp', ko: '송도 베이스토메이션', addr: '부산 서구 송도해변로 171', dur: 30, leg: 24, won: 17000, taxi: 11000, note: '搭纜車含排隊 約 30 分' },
+      { t: '09:31', zh: '松島海上纜車 起站', naver: 'https://naver.me/5T0cslkp', ko: '송도 베이스토메이션', addr: '부산 서구 송도해변로 171', dur: 30, leg: 24, won: 19000, taxi: 11000, note: '搭纜車含排隊 約 30 分' },
       { t: '10:01', zh: '松島海上纜車 尾站', naver: 'https://naver.me/IgMzLFMh', ko: '송도 스카이파크', addr: '부산 서구 암남공원로 181', dur: 0 },
       { t: '10:19', zh: '甘川洞文化村', naver: 'https://naver.me/xsZHduSW', ko: '감천문화마을', dur: 150, leg: 14, taxi: 7800, subs: [
         { zh: '小王子與狐狸', ko: '어린왕자와 사막여우', addr: '부산광역시 사하구 감내2로 128', naver: 'https://naver.me/xAfEiIkm' },
@@ -287,7 +287,7 @@
   });
 
   var PASS = [
-    { name: '松島海上纜車', zone: '藍區', price: '₩17,000', big5: '✓', hr48: '✕', b5c: ACCENT, h48c: '#c0b8aa' },
+    { name: '松島海上纜車', zone: '藍區', price: '₩19,000', big5: '✓', hr48: '✕', b5c: ACCENT, h48c: '#c0b8aa' },
     { name: 'Skyline Luge', zone: '紫區', price: '₩34,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
     { name: '釜山樂天世界樂園', zone: '紫區', price: '₩49,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
     { name: '青沙浦（藍線公園）', zone: '藍區', price: '₩8,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
@@ -427,15 +427,15 @@
   sights = days.reduce(function (a, d) { return a + d.spend; }, 0);
   transport = days.reduce(function (a, d) { return a + d.fares; }, 0);
   airport = (36000 / SPLIT) * RATE;
-  saveBig5 = 61000 * RATE;
+  saveBig5 = 63000 * RATE;
   save48 = 73000 * RATE;
 
   BUDGET = [
     { label: '門票・餐食・購物', note: '四天各站花費', value: nt(sights), color: '#23201c' },
     { label: '市區交通（計程車）', note: '每趟 2 台 ÷ 6 人', value: nt(transport), color: '#23201c' },
-    { label: '機場接送', note: '₩18,000 × 2 台', value: '+ ' + nt(airport), color: '#23201c' },
+    { label: '機場接送', note: '₩18,000 × 2 台 × 2 趟', value: '+ ' + nt(airport), color: '#23201c' },
     { label: '釜山 Pass 折抵（48hr）', note: '省 ₩73,000', value: '− ' + nt(save48), color: ACCENT },
-    { label: '釜山 Pass 折抵（Big 5）', note: '省 ₩61,000', value: '− ' + nt(saveBig5), color: ACCENT }
+    { label: '釜山 Pass 折抵（Big 5）', note: '省 ₩63,000', value: '− ' + nt(saveBig5), color: '#6d675e', muted: true }
   ];
   grand48 = nt(tripTotal + airport - save48);
   grandBig5 = nt(tripTotal + airport - saveBig5);
@@ -593,10 +593,10 @@
       return '' +
         '<div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid #e7e3da;">' +
           '<div style="display: flex; flex-direction: column; gap: 2px;">' +
-            '<div style="font-size: 15px;">' + esc(b.label) + '</div>' +
-            '<div style="font-size: 11px; color: #8a8378;">' + esc(b.note) + '</div>' +
+            '<div style="font-size: ' + (b.muted ? '13px; color: #6d675e' : '15px') + ';">' + esc(b.label) + '</div>' +
+            '<div style="font-size: ' + (b.muted ? '10px' : '11px') + '; color: #8a8378;">' + esc(b.note) + '</div>' +
           '</div>' +
-          '<div style="font-size: 16px; font-weight: 600; color: ' + b.color + ';">' + esc(b.value) + '</div>' +
+          '<div style="font-size: ' + (b.muted ? '14px' : '16px') + '; font-weight: 600; color: ' + b.color + ';">' + esc(b.value) + '</div>' +
         '</div>';
     }).join('');
 
@@ -656,13 +656,13 @@
           '<div style="color: #8a8378; font-size: 11px; letter-spacing: 0.06em; text-align: right;">BIG 5</div>' +
           '<div style="color: #8a8378; font-size: 11px; letter-spacing: 0.06em; text-align: right;">48HR</div>' +
           '<div>涵蓋景點原價</div>' +
-          '<div style="text-align: right;">₩126,000</div>' +
+          '<div style="text-align: right;">₩128,000</div>' +
           '<div style="text-align: right;">₩158,000</div>' +
           '<div>Pass 售價</div>' +
           '<div style="text-align: right;">₩65,000</div>' +
           '<div style="text-align: right;">₩85,000</div>' +
           '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px;">省下</div>' +
-          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">₩61,000</div>' +
+          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">₩63,000</div>' +
           '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">₩73,000</div>' +
           '<div>約合每人</div>' +
           '<div style="text-align: right; font-weight: 600;">' + esc(nt(saveBig5)) + '</div>' +
