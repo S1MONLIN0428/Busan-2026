@@ -30,7 +30,9 @@
   * { box-sizing: border-box; }
   a { color: #3f5d78; text-decoration: none; }
   a:hover { color: #23201c; text-decoration: underline; }
-  button { color: #23201c; font-family: inherit; -webkit-text-size-adjust: 100%; }
+  button { color: #23201c; font-family: inherit; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+  button, [data-check], [data-fx-wrap], [data-naver] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  [data-fx-key] { -webkit-user-select: none; user-select: none; }
   a[x-apple-data-detectors], [data-shell] a[href^="x-apple-data-detectors"] { color: inherit !important; text-decoration: none !important; font: inherit !important; }
   [data-track]::-webkit-scrollbar, [data-tabs]::-webkit-scrollbar { display: none; }
   /* Two easings for the whole page. --e decelerates hard: fast off the mark,
