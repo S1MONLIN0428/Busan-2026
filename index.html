@@ -672,16 +672,77 @@
   }
 
   // ---- converter ----------------------------------------------------------
-  var fxKrw = '';   // survives a repaint so a rate refresh doesn't clear the field
+  var fxKrw = '';   // raw expression — survives a repaint so a rate refresh doesn't clear the field
+  var fxTwd = '';
+  var fxLast = 'krw';   // which field the operator pad types into
+
+  // Tiny recursive-descent evaluator: + - * / ( ) only, no eval().
+  function fxEval(src) {
+    var s = String(src).replace(/[×✕]/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/[,\s]/g, '');
+    if (!s || /[^0-9.+\-*/()]/.test(s)) return NaN;
+    var i = 0;
+    function peek() { return s.charAt(i); }
+    function atom() {
+      if (peek() === '(') { i++; var v = expr(); if (peek() === ')') i++; return v; }
+      var m = /^[0-9]*\.?[0-9]+/.exec(s.slice(i));
+      if (!m) return NaN;
+      i += m[0].length;
+      return parseFloat(m[0]);
+    }
+    function unary() {
+      if (peek() === '-') { i++; return -unary(); }
+      if (peek() === '+') { i++; return unary(); }
+      return atom();
+    }
+    function term() {
+      var v = unary();
+      while (peek() === '*' || peek() === '/') {
+        var op = s.charAt(i++), r = unary();
+        v = op === '*' ? v * r : v / r;
+      }
+      return v;
+    }
+    function expr() {
+      var v = term();
+      while (peek() === '+' || peek() === '-') {
+        var op = s.charAt(i++), r = term();
+        v = op === '+' ? v + r : v - r;
+      }
+      return v;
+    }
+    var out = expr();
+    return (i === s.length && isFinite(out)) ? out : NaN;
+  }
+
+  // Same, but tolerates a half-typed tail ("12000+") so the readout stays live.
+  function fxEvalPartial(src) {
+    var s = String(src).replace(/[,\s]/g, '');
+    for (var g = 0; g < 4 && s; g++) {
+      var n = fxEval(s);
+      if (isFinite(n)) return n;
+      s = s.slice(0, -1);
+    }
+    return NaN;
+  }
+
+  function fxHasOp(raw) { return /[+\-*/×÷−()]/.test(String(raw).slice(1)); }
+
+  function fxEcho(sym, raw) {
+    if (!fxHasOp(raw)) return '';
+    var n = fxEvalPartial(raw);
+    return isFinite(n) ? '= ' + sym + fxFormat(n) : '';
+  }
 
   function fxField(sym, label, id, value) {
+    var on = fxLast === id;
     return '' +
-      '<div style="border: 1px solid #cfc8bb; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; background: #fdf8ee;">' +
-        '<div style="font-size: 11px; letter-spacing: 0.14em; color: #8a8378;">' + esc(label) + '</div>' +
+      '<div data-fx-wrap="' + id + '" style="border: 1px solid ' + (on ? '#23201c' : '#cfc8bb') + '; border-radius: 14px; padding: 9px 14px 10px; display: flex; flex-direction: column; gap: 2px; background: #fdf8ee; cursor: pointer;">' +
+        '<div style="font-size: 11px; letter-spacing: 0.14em; color: ' + (on ? '#3d3831' : '#8a8378') + ';">' + esc(label) + '</div>' +
         '<div style="display: flex; align-items: baseline; gap: 8px;">' +
           '<span style="font-size: 19px; color: #8a8378;">' + esc(sym) + '</span>' +
-          '<input data-fx="' + id + '" type="text" inputmode="decimal" value="' + esc(value) + '" placeholder="0" style="flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-family: inherit; font-size: 26px; font-weight: 600; color: #23201c; padding: 0;" />' +
+          '<input data-fx="' + id + '" type="text" inputmode="none" readonly value="' + esc(value) + '" placeholder="0" style="flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-family: inherit; font-size: 22px; font-weight: 600; color: #23201c; padding: 0; cursor: pointer;" />' +
         '</div>' +
+        '<div data-fx-echo="' + id + '" style="min-height: 14px; font-size: 12px; color: #8a8378; letter-spacing: 0.02em;">' + esc(fxEcho(sym, value)) + '</div>' +
       '</div>';
   }
 
@@ -692,8 +753,17 @@
   }
 
   function converterPanel() {
-    var chips = [1000, 5000, 10000, 50000].map(function (v) {
-      return '<button type="button" data-fx-quick="' + v + '" style="border: 1px solid #cfc8bb; background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 12px; color: #3d3831; cursor: pointer;">₩' + v.toLocaleString('en-US') + '</button>';
+    var KEYS = [
+      ['7', '7'], ['8', '8'], ['9', '9'], ['÷', '/'],
+      ['4', '4'], ['5', '5'], ['6', '6'], ['×', '*'],
+      ['1', '1'], ['2', '2'], ['3', '3'], ['−', '-'],
+      ['.', '.'], ['0', '0'], ['⌫', 'back'], ['+', '+'],
+      ['C', 'clear'], ['÷6 六人平摊', '/6']
+    ];
+    var pad = KEYS.map(function (k, i) {
+      var isOp = '+-*/'.indexOf(k[1]) >= 0;
+      var wide = i >= 16;
+      return '<button type="button" data-fx-key="' + k[1] + '" style="grid-column: span ' + (wide ? 2 : 1) + '; border: 1px solid ' + (isOp || wide ? '#cfc8bb' : 'transparent') + '; background: ' + (isOp || wide ? '#f3ece0' : '#fdf8ee') + '; border-radius: 14px; padding: ' + (wide ? 11 : 10) + 'px 0; font-family: inherit; font-size: ' + (wide ? 13 : 19) + 'px; font-weight: ' + (wide ? 400 : 500) + '; color: #23201c; cursor: pointer; line-height: 1;">' + k[0] + '</button>';
     }).join('');
 
     return '' +
@@ -709,9 +779,9 @@
             '<span style="font-size: 11px; letter-spacing: 0.1em; color: #8a8378;">目前匯率 ₩1 = NT$' + (Math.round(RATE * 10000) / 10000) + '</span>' +
             '<span style="flex: 1; height: 1px; background: #ddd8ce;"></span>' +
           '</div>' +
-          fxField('NT$', 'TWD 台幣', 'twd', fxKrw === '' ? '' : fxFormat(parseFloat(fxKrw.replace(/,/g, '')) * RATE)) +
+          fxField('NT$', 'TWD 台幣', 'twd', fxTwd) +
         '</div>' +
-        '<div style="display: flex; flex-wrap: wrap; gap: 7px;">' + chips + '</div>' +
+        '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">' + pad + '</div>' +
         '<div style="display: flex; flex-direction: column; gap: 5px; border-top: 1px solid #ddd8ce; padding-top: 14px;">' +
           '<div style="font-size: 11px; color: #8a8378;">' + (rateDate ? '更新於 ' + esc(rateDate) : '離線 · 使用固定匯率 0.023') + '</div>' +
           '<div style="font-size: 11px;"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a></div>' +
@@ -1046,24 +1116,59 @@
     var f = e.target.closest ? e.target.closest('[data-fx]') : null;
     if (!f) return;
     var which = f.getAttribute('data-fx');
-    var raw = f.value.replace(/[^0-9.]/g, '');
-    var n = parseFloat(raw);
-    var other = track.querySelector('[data-fx="' + (which === 'krw' ? 'twd' : 'krw') + '"]');
-    if (which === 'krw') fxKrw = raw;
-    if (!other) return;
-    if (!isFinite(n)) { other.value = ''; return; }
-    other.value = fxFormat(which === 'krw' ? n * RATE : n / RATE);
+    var raw = f.value.replace(/[^0-9.+\-*/()×÷−]/g, '');
+    if (raw !== f.value) f.value = raw;
+    fxLast = which;
+    fxSync(which, raw);
   });
 
+  // Push one field's expression through to the other, and refresh both readouts.
+  function fxSync(which, raw) {
+    var n = fxEvalPartial(raw);
+    var out = isFinite(n) ? fxFormat(which === 'krw' ? n * RATE : n / RATE) : '';
+    var other = track.querySelector('[data-fx="' + (which === 'krw' ? 'twd' : 'krw') + '"]');
+    if (other) other.value = out;
+    if (which === 'krw') { fxKrw = raw; fxTwd = out; }
+    else { fxTwd = raw; fxKrw = out; }
+    var eK = track.querySelector('[data-fx-echo="krw"]');
+    var eT = track.querySelector('[data-fx-echo="twd"]');
+    if (eK) eK.textContent = fxEcho('₩', fxKrw);
+    if (eT) eT.textContent = fxEcho('NT$', fxTwd);
+  }
+
   track.addEventListener('click', function (e) {
-    var q = e.target.closest('[data-fx-quick]');
-    if (!q) return;
-    var v = +q.getAttribute('data-fx-quick');
-    var k = track.querySelector('[data-fx="krw"]');
-    var t = track.querySelector('[data-fx="twd"]');
-    fxKrw = String(v);
-    if (k) k.value = v.toLocaleString('en-US');
-    if (t) t.value = fxFormat(v * RATE);
+    var key = e.target.closest('[data-fx-key]');
+    if (key) {
+      var op = key.getAttribute('data-fx-key');
+      var f = track.querySelector('[data-fx="' + fxLast + '"]');
+      if (!f) return;
+      var v = f.value.replace(/,/g, '');
+      if (op === 'clear') v = '';
+      else if (op === 'back') v = v.slice(0, -1);
+      else if (op === '/6') {
+        v = v.replace(/[+\-*/]+$/, '').replace(/\/6$/, '').replace(/^\((.*)\)$/, '$1');
+        if (v !== '') v = (/[+\-]/.test(v.slice(1)) ? '(' + v + ')' : v) + '/6';
+      }
+      else if (/[0-9]/.test(op)) v = v + op;
+      else if (op === '.') { if (!/\.[0-9]*$/.test(v)) v = (v === '' || /[+\-*/(]$/.test(v)) ? v + '0.' : v + '.'; }
+      else if (v !== '') v = /[+\-*/]$/.test(v) ? v.slice(0, -1) + op : v + op;
+      f.value = v;
+      fxSync(fxLast, v);
+      return;
+    }
+    var wrap = e.target.closest('[data-fx-wrap]');
+    if (wrap) {
+      var which = wrap.getAttribute('data-fx-wrap');
+      if (which === fxLast) return;
+      fxLast = which;
+      ['krw', 'twd'].forEach(function (id) {
+        var w = track.querySelector('[data-fx-wrap="' + id + '"]');
+        if (!w) return;
+        var on = id === fxLast;
+        w.style.borderColor = on ? '#23201c' : '#cfc8bb';
+        w.firstChild.style.color = on ? '#3d3831' : '#8a8378';
+      });
+    }
   });
 
   track.addEventListener('click', function (e) {
