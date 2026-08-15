@@ -168,7 +168,10 @@
   <header style="padding: 1.375rem 1.375rem 0.875rem; border-bottom: 1px solid #ddd8ce; display: flex; flex-direction: column; gap: 0.375rem;">
     <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem;">
       <div style="font-size: 1.6875rem; font-weight: 700; letter-spacing: 0.01em;">釜山 · 2026</div>
-      <div style="font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8a8378;">Busan</div>
+      <span data-wx-bar="" style="display: flex; gap: 0.125rem; border: 1px solid #ddd8ce; border-radius: 999px; padding: 0.125rem;">
+        <button type="button" data-wx="sun" aria-label="晴天行程" title="晴天" style="border: 0; background: transparent; color: #6d675e; padding: 0.3125rem 0.625rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" style="width: 0.875rem; height: 0.875rem; display: block;"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+        <button type="button" data-wx="rain" aria-label="雨天行程" title="雨天" style="border: 0; background: transparent; color: #6d675e; padding: 0.3125rem 0.625rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width: 0.875rem; height: 0.875rem; display: block;"><path d="M17.5 15a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 7.5 3.75 3.75 0 0 0 7 15"></path><path d="M9 18.5l-1 2M13 18.5l-1 2M17 18.5l-1 2"></path></svg></button>
+      </span>
     </div>
   </header>
 
@@ -198,6 +201,22 @@
   } catch (e) {}
   var SPLIT = 3;      // taxi: 2 cars ÷ 6 people = fare/3 per person
   var STORE_KEY = 'busan-itinerary-checked';
+
+  // ---- weather mode -------------------------------------------------------
+  // One switch for the whole trip. Live weather decides it on open; a manual
+  // tap overrides that until the calendar day is out.
+  var rainMode = false;
+  var WX_KEY = 'busan-wx-override';
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+  var wxOverride = null;
+  try {
+    var ov = JSON.parse(localStorage.getItem(WX_KEY) || 'null');
+    if (ov && ov.day === todayKey() && (ov.mode === 'rain' || ov.mode === 'sun')) wxOverride = ov.mode;
+  } catch (e) {}
+  if (wxOverride) rainMode = wxOverride === 'rain';
 
   // ---- data ---------------------------------------------------------------
   var DAYS = [
@@ -243,7 +262,7 @@
       { t: '14:31', zh: 'Casino Paradise Busan', naver: 'https://naver.me/G3v3L5PP', ko: '파라다이스 카지노 부산', addr: '부산광역시 해운대구 해운대해변로 296 (중동)', dur: 30, leg: 4 },
       { t: '15:27', zh: 'MUSEUM 1', naver: 'https://naver.me/5wrchCmu', ko: '뮤지엄 원', addr: '부산광역시 해운대구 센텀서로 20 (우동)', dur: 120, leg: 20, won: 18000, taxi: 8000 },
       { t: '17:33', zh: '巨大牛肉湯飯', naver: 'https://naver.me/GgUvQujG', ko: '거대곰탕', addr: '부산 해운대구 해운대해변로 163, 현대베네시티아파트 상가동 103호', hours: '07:00–21:00', dur: 60, leg: 4, won: 30000 },
-      { t: '18:33', zh: 'SPA Land Centum', naver: 'https://naver.me/FSvEiFHP', ko: '신세계 스파랜드 (센텀시티점)', dur: 240, leg: 0, won: 20000 },
+      { t: '18:33', zh: 'SPA Land Centum', naver: 'https://naver.me/FSvEiFHP', ko: '신세계 스파랜드 (센텀시티점)', dur: 240, leg: 0, won: 30000, note: '停留 4 小時 · 門票 ₩20,000 + 館內消費 ₩10,000' },
       { t: '23:36', zh: '回 Airbnb', ko: '', dur: 0, leg: 23, taxi: 23000 }
     ] },
     { label: 'Day 5', dateShort: '8/20', dow: '四', headline: '廣安里 · 遊艇 · 밀락더마켓', stops: [
@@ -269,23 +288,65 @@
     ] }
   ];
 
+  // Rain-day alternatives. The wet-weather plan swaps the two flexible days:
+  // the indoor Centum/海雲台 day moves to 8/17 and the 松島・甘川洞 walking day
+  // to 8/19; 8/18 front-loads 樂天世界 and drops the sit-down lunch. 8/16 and
+  // 8/20 are unchanged, so they show their normal plan in rain mode.
+  DAYS[2].rain = { headline: '樂天世界 · Luge · Outlet', stops: [
+    { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
+    { t: '10:18', zh: '釜山樂天世界樂園', naver: 'https://naver.me/GYDJZ7sX', ko: '롯데월드 어드벤처 부산', addr: '부산 기장군 기장읍 동부산관광로 42', dur: 240, leg: 60, won: 49000, taxi: 29300 },
+    { t: '14:28', zh: 'Skyline Luge 釜山', naver: 'https://naver.me/5ajdUSBI', ko: '스카이라인 루지 부산', addr: '부산 기장군 기장읍 기장해안로 205', dur: 120, leg: 7, won: 34000 },
+    { t: '16:35', zh: 'Lotte Premium Outlet 東釜山店', naver: 'https://naver.me/Fc6MGLTZ', ko: '롯데프리미엄아울렛 동부산점', dur: 120, leg: 5 },
+    { t: '19:40', zh: '回 Airbnb', ko: '', dur: 0, leg: 50, taxi: 26000 }
+  ] };
+  DAYS[1].rain = { headline: 'MUSEUM 1 · SPA Land · X the SKY', stops: [
+    { t: '09:35', zh: 'Airbnb 出發', ko: '', dur: 0 },
+    { t: '10:00', zh: 'MUSEUM 1', naver: 'https://naver.me/5wrchCmu', ko: '뮤지엄 원', addr: '부산광역시 해운대구 센텀서로 20 (우동)', dur: 120, leg: 19, won: 18000, taxi: 20000 },
+    { t: '12:06', zh: 'SPA Land Centum', naver: 'https://naver.me/FSvEiFHP', ko: '신세계 스파랜드 (센텀시티점)', dur: 300, leg: 4, won: 30000, note: '停留 5 小時 · 門票 ₩20,000 + 館內消費 ₩10,000' },
+    { t: '17:10', zh: '巨大牛肉湯飯', naver: 'https://naver.me/GgUvQujG', ko: '거대곰탕', addr: '부산 해운대구 해운대해변로 163, 현대베네시티아파트 상가동 103호', hours: '07:00–21:00', dur: 60, leg: 3, won: 30000 },
+    { t: '18:29', zh: '老虎冰淇淋大福', naver: 'https://naver.me/FUiMtPLU', ko: '호랑이젤라떡', addr: '부산 해운대구 달맞이길62번길 38 (미포)', hours: '僅外帶', dur: 30, leg: 14, won: 4200, taxi: 10000 },
+    { t: '19:03', zh: 'Busan X the SKY', naver: 'https://naver.me/xEXOynhU', ko: '부산엑스더스카이', dur: 120, leg: 3, won: 29000 },
+    { t: '21:14', zh: 'Casino Paradise Busan', naver: 'https://naver.me/G3v3L5PP', ko: '파라다이스 카지노 부산', addr: '부산광역시 해운대구 해운대해변로 296 (중동)', dur: 60, leg: 8 },
+    { t: '22:53', zh: '回 Airbnb', ko: '', dur: 0, leg: 30, taxi: 20000 }
+  ] };
+  DAYS[3].rain = { headline: '松島纜車 · 甘川洞 · 白險灘', stops: [
+    { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
+    { t: '09:32', zh: '松島海上纜車 起站', naver: 'https://naver.me/5T0cslkp', ko: '송도 베이스토메이션', addr: '부산 서구 송도해변로 171', dur: 30, leg: 24, won: 17000, taxi: 11000, note: '搭纜車含排隊 約 30 分' },
+    { t: '10:02', zh: '松島海上纜車 尾站', naver: 'https://naver.me/IgMzLFMh', ko: '송도 스카이파크', addr: '부산 서구 암남공원로 181', dur: 0 },
+    { t: '10:21', zh: '甘川洞文化村', naver: 'https://naver.me/xsZHduSW', ko: '감천문화마을', dur: 150, leg: 14, taxi: 7800, subs: [
+      { zh: '小王子與狐狸', ko: '어린왕자와 사막여우', addr: '부산광역시 사하구 감내2로 128', naver: 'https://naver.me/xAfEiIkm' },
+      { zh: '甘川麵包店', ko: '감천제빵소', addr: '부산광역시 사하구 감내2로 145', naver: 'https://naver.me/I5wdlRv2' },
+      { zh: 'Grand Budapest Doll Hotel', ko: '그랜드 부다페스트 인형 호텔', addr: '부산광역시 사하구 감내2로 134', naver: 'https://naver.me/xllr3uBY' },
+      { zh: 'Flipbook Studio 手翻書', ko: '움직이는 사진상점', addr: '부산광역시 사하구 감내2로 170-1', naver: 'https://naver.me/Fx215lKO' }
+    ] },
+    { t: '13:24', zh: '影島海女村', naver: 'https://naver.me/x0OH1iGy', ko: '영도해녀촌', addr: '부산광역시 영도구 중리남로 2-35', dur: 60, leg: 25, won: 25000, taxi: 10600 },
+    { t: '14:37', zh: '白險灘文化村', naver: 'https://naver.me/F93DmOl2', ko: '흰여울문화마을', dur: 180, leg: 10, taxi: 6200 },
+    { t: '17:37', zh: 'Aether', naver: 'https://naver.me/GrgnBgcC', ko: '에테르', addr: '부산 영도구 절영로 234', hours: '每日 10:00–21:00', dur: 0, won: 20000 },
+    { t: '18:01', zh: '扎嘎其市場', naver: 'https://naver.me/5FDTgY6J', ko: '자갈치시장', dur: 90, leg: 18, won: 60000, taxi: 7900 },
+    { t: '19:47', zh: '回 Airbnb', ko: '', dur: 0, leg: 12, taxi: 5100 }
+  ] };
+
   // Every 'leg' above is a bare door-to-door estimate. Real trips run long, so
   // each one is padded 1.3x and arrival times are derived from that — the 't'
   // on the first stop of a day is the only hand-set time; the rest are computed.
   var TIME_BUFFER = 1.3;
-  function legMin(s) { return s.leg ? Math.round(s.leg * TIME_BUFFER) : 0; }
-  DAYS.forEach(function (d) {
+  function legMin(s) { return s.leg ? Math.ceil(s.leg * TIME_BUFFER) : 0; }
+  function stampTimes(stops) {
     var cur = 0;
-    d.stops.forEach(function (s, i) {
+    stops.forEach(function (s, i) {
       if (i === 0) {
         var p = s.t.split(':');
         cur = (+p[0]) * 60 + (+p[1]);
       } else {
-        cur += (d.stops[i - 1].dur || 0) + (d.stops[i - 1].hold || 0) + legMin(s);
+        cur += (stops[i - 1].dur || 0) + (stops[i - 1].hold || 0) + legMin(s);
         var h = Math.floor(cur / 60) % 24, m = cur % 60;
         s.t = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
       }
     });
+  }
+  DAYS.forEach(function (d) {
+    stampTimes(d.stops);
+    if (d.rain) stampTimes(d.rain.stops);
   });
 
   var PASS = [
@@ -353,8 +414,12 @@
   function derive() {
   days = DAYS.map(function (d, di) {
     var total = 0, spend = 0, fares = 0, dSpend = 0, dFares = 0;
+    // In rain mode a day with an alternative plan is costed and timed from that
+    // plan instead, so every figure on the page follows the switch.
+    var src = (rainMode && d.rain) ? d.rain : d;
+    var isRain = src !== d;
 
-    var stops = d.stops.map(function (s, si) {
+    var stops = src.stops.map(function (s, si) {
       var w = s.won || 0;
       var perPerson = s.shared ? w / SPLIT : w;
       var fare = s.taxi ? s.taxi / SPLIT : 0;
@@ -388,7 +453,7 @@
       });
 
       return {
-        key: di + ':' + si,
+        key: (isRain ? 'r' : '') + di + ':' + si,
         time: s.t,
         zh: s.zh,
         ko: s.ko || '',
@@ -415,7 +480,8 @@
       label: d.label,
       dateShort: d.dateShort,
       dateLong: d.dateShort + '（' + d.dow + '）',
-      headline: d.headline,
+      headline: src.headline,
+      isRain: isRain,
       totalNt: nt(dSpend + dFares),
       spend: spend,
       fares: fares,
@@ -459,6 +525,7 @@
 
   function overviewPanel() {
     var rows = days.map(function (day) {
+      var headline = day.headline;
       var stops = day.stops.map(function (s) {
         return '' +
           '<div style="display: flex; flex-direction: column;">' +
@@ -474,7 +541,7 @@
         '<div style="border-top: 1px solid #ddd8ce;">' +
           '<button type="button" data-day-toggle="' + day.index + '" style="width: 100%; border: 0; background: none; padding: 13px 0; display: flex; align-items: baseline; gap: 10px; cursor: pointer; text-align: left;">' +
             '<span style="font-size: 18px; font-weight: 600; flex: 0 0 auto;">' + esc(day.dateShort) + '</span>' +
-            '<span style="font-size: 13px; color: #6d675e; flex: 1;">' + esc(day.headline) + '</span>' +
+            '<span style="font-size: 13px; color: #6d675e; flex: 1;">' + esc(headline) + (day.isRain ? ' · 雨天備案' : '') + '</span>' +
             '<span data-day-caret="' + day.index + '" style="font-size: 11px; color: #8a8378;">+</span>' +
           '</button>' +
           '<div data-day-list="' + day.index + '" style="display: none; padding: 0 0 14px 0; flex-direction: column; gap: 5px;">' + stops + '</div>' +
@@ -571,11 +638,12 @@
     }).join('');
 
     return '' +
-      '<section data-panel="" data-screen-label="' + esc(day.label) + '" style="' + PANEL + '">' +
+      '<section data-panel="" data-screen-label="' + esc(day.label) + (rainMode ? '（雨）' : '') + '" style="' + PANEL + '">' +
         '<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; border-bottom: 1px solid #23201c; padding-bottom: 12px; margin-bottom: 4px;">' +
           '<div style="display: flex; flex-direction: column; gap: 3px;">' +
-            '<div style="' + EYEBROW + '">' + esc(day.label) + '</div>' +
+            '<div style="' + EYEBROW + '">' + esc(day.label) + (rainMode ? ' · Rain plan' : '') + '</div>' +
             '<div style="font-size: 25px; font-weight: 700;">' + esc(day.dateLong) + '</div>' +
+            (day.isRain ? '<div style="font-size: 13px; color: #6d675e; padding-top: 2px;">' + esc(day.headline) + '</div>' : '') +
           '</div>' +
         '</div>' +
         stops +
@@ -917,6 +985,65 @@
 
   derive();
   paint();
+
+  // ---- weather switch -----------------------------------------------------
+  var wxBar = document.querySelector('[data-wx-bar]');
+
+  function paintWx() {
+    if (!wxBar) return;
+    Array.prototype.forEach.call(wxBar.querySelectorAll('[data-wx]'), function (b) {
+      var on = (b.getAttribute('data-wx') === 'rain') === rainMode;
+      b.style.background = on ? '#23201c' : 'transparent';
+      b.style.color = on ? '#f8f0df' : '#6d675e';
+    });
+  }
+
+  function setRain(next) {
+    if (next === rainMode) return;
+    rainMode = next;
+    paintWx();
+    derive();
+    paint();
+  }
+
+  paintWx();
+
+  if (wxBar) {
+    wxBar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-wx]');
+      if (!b) return;
+      var next = b.getAttribute('data-wx') === 'rain';
+      // A manual tap wins for the rest of the calendar day, so the auto check
+      // on the next open can't undo a decision made while standing outside.
+      wxOverride = next ? 'rain' : 'sun';
+      try { localStorage.setItem(WX_KEY, JSON.stringify({ mode: wxOverride, day: todayKey() })); } catch (e2) {}
+      setRain(next);
+    });
+  }
+
+  // Checked once per open, never on a timer. Location is asked for rather than
+  // assumed; a refusal, no network or a slow fix all leave the sunny plan up.
+  function detectWeather() {
+    if (wxOverride || !window.fetch || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var la = pos.coords.latitude.toFixed(3), lo = pos.coords.longitude.toFixed(3);
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=' + la + '&longitude=' + lo +
+            '&current=precipitation,weather_code&daily=precipitation_probability_max' +
+            '&forecast_days=1&timezone=auto', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.current) return;
+          var code = j.current.weather_code;
+          // WMO 51-67 drizzle and rain, 80-82 showers, 95-99 thunderstorm.
+          var nowWet = j.current.precipitation > 0 ||
+            (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+          var prob = (j.daily && j.daily.precipitation_probability_max || [])[0] || 0;
+          setRain(nowWet || prob > 50);
+        })
+        .catch(function () {});
+    }, function () {}, { timeout: 8000, maximumAge: 600000 });
+  }
+  detectWeather();
 
   // Daily-updated free endpoint, no key. Cached so the page is never blocked on
   // it: a failure or a plane-mode open just keeps the last known rate.
