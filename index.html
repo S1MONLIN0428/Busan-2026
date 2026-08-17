@@ -288,30 +288,23 @@
     ] }
   ];
 
-  // Rain-day alternatives. The wet-weather plan swaps the two flexible days:
-  // the indoor Centum/海雲台 day moves to 8/17 and the 松島・甘川洞 walking day
-  // to 8/19; 8/18 front-loads 樂天世界 and drops the sit-down lunch. 8/16 and
-  // 8/20 are unchanged, so they show their normal plan in rain mode.
-  DAYS[2].rain = { headline: '樂天世界 · Luge · Outlet', stops: [
-    { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
-    { t: '10:18', zh: '釜山樂天世界樂園', naver: 'https://naver.me/GYDJZ7sX', ko: '롯데월드 어드벤처 부산', addr: '부산 기장군 기장읍 동부산관광로 42', dur: 240, leg: 60, won: 49000, taxi: 29300 },
-    { t: '14:28', zh: 'Skyline Luge 釜山', naver: 'https://naver.me/5ajdUSBI', ko: '스카이라인 루지 부산', addr: '부산 기장군 기장읍 기장해안로 205', dur: 120, leg: 7, won: 34000 },
-    { t: '16:35', zh: 'Lotte Premium Outlet 東釜山店', naver: 'https://naver.me/Fc6MGLTZ', ko: '롯데프리미엄아울렛 동부산점', dur: 120, leg: 5 },
-    { t: '19:40', zh: '回 Airbnb', ko: '', dur: 0, leg: 50, taxi: 26000 }
-  ] };
+  // Rain-day alternatives. The wet-weather plan reshuffles the three flexible
+  // days: 8/17 becomes the indoor Centum/海雲台 day, 8/18 the 松島・甘川洞 loop,
+  // and 8/19 pairs 海東龍宮寺 with 樂天世界 (Luge and the Outlet drop out).
+  // 8/16 and 8/20 are unchanged, so they show their normal plan in rain mode.
   DAYS[1].rain = { headline: 'MUSEUM 1 · SPA Land · X the SKY', stops: [
     { t: '09:35', zh: 'Airbnb 出發', ko: '', dur: 0 },
     { t: '10:00', zh: 'MUSEUM 1', naver: 'https://naver.me/5wrchCmu', ko: '뮤지엄 원', addr: '부산광역시 해운대구 센텀서로 20 (우동)', dur: 120, leg: 19, won: 18000, taxi: 20000 },
-    { t: '12:06', zh: 'SPA Land Centum', naver: 'https://naver.me/FSvEiFHP', ko: '신세계 스파랜드 (센텀시티점)', dur: 300, leg: 4, won: 30000, note: '停留 5 小時 · 門票 ₩20,000 + 館內消費 ₩10,000' },
+    { t: '12:06', zh: 'SPA Land Centum', naver: 'https://naver.me/FSvEiFHP', ko: '신세계 스파랜드 (센텀시티점)', dur: 300, leg: 4, won: 20000, note: '停留 5 小時 · 門票 ₩20,000（館內消費另計）' },
     { t: '17:10', zh: '巨大牛肉湯飯', naver: 'https://naver.me/GgUvQujG', ko: '거대곰탕', addr: '부산 해운대구 해운대해변로 163, 현대베네시티아파트 상가동 103호', hours: '07:00–21:00', dur: 60, leg: 3, won: 30000 },
     { t: '18:29', zh: '老虎冰淇淋大福', naver: 'https://naver.me/FUiMtPLU', ko: '호랑이젤라떡', addr: '부산 해운대구 달맞이길62번길 38 (미포)', hours: '僅外帶', dur: 30, leg: 14, won: 4200, taxi: 10000 },
     { t: '19:03', zh: 'Busan X the SKY', naver: 'https://naver.me/xEXOynhU', ko: '부산엑스더스카이', dur: 120, leg: 3, won: 29000 },
     { t: '21:14', zh: 'Casino Paradise Busan', naver: 'https://naver.me/G3v3L5PP', ko: '파라다이스 카지노 부산', addr: '부산광역시 해운대구 해운대해변로 296 (중동)', dur: 60, leg: 8 },
     { t: '22:53', zh: '回 Airbnb', ko: '', dur: 0, leg: 30, taxi: 20000 }
   ] };
-  DAYS[3].rain = { headline: '松島纜車 · 甘川洞 · 白險灘', stops: [
+  DAYS[2].rain = { headline: '松島纜車 · 甘川洞 · 白淺灘', stops: [
     { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
-    { t: '09:32', zh: '松島海上纜車 起站', naver: 'https://naver.me/5T0cslkp', ko: '송도 베이스토메이션', addr: '부산 서구 송도해변로 171', dur: 30, leg: 24, won: 17000, taxi: 11000, note: '搭纜車含排隊 約 30 分' },
+    { t: '09:32', zh: '松島海上纜車 起站', naver: 'https://naver.me/5T0cslkp', ko: '송도 베이스토메이션', addr: '부산 서구 송도해변로 171', dur: 30, leg: 24, won: 19000, taxi: 11000, note: '搭纜車含排隊 約 30 分' },
     { t: '10:02', zh: '松島海上纜車 尾站', naver: 'https://naver.me/IgMzLFMh', ko: '송도 스카이파크', addr: '부산 서구 암남공원로 181', dur: 0 },
     { t: '10:21', zh: '甘川洞文化村', naver: 'https://naver.me/xsZHduSW', ko: '감천문화마을', dur: 150, leg: 14, taxi: 7800, subs: [
       { zh: '小王子與狐狸', ko: '어린왕자와 사막여우', addr: '부산광역시 사하구 감내2로 128', naver: 'https://naver.me/xAfEiIkm' },
@@ -320,10 +313,19 @@
       { zh: 'Flipbook Studio 手翻書', ko: '움직이는 사진상점', addr: '부산광역시 사하구 감내2로 170-1', naver: 'https://naver.me/Fx215lKO' }
     ] },
     { t: '13:24', zh: '影島海女村', naver: 'https://naver.me/x0OH1iGy', ko: '영도해녀촌', addr: '부산광역시 영도구 중리남로 2-35', dur: 60, leg: 25, won: 25000, taxi: 10600 },
-    { t: '14:37', zh: '白險灘文化村', naver: 'https://naver.me/F93DmOl2', ko: '흰여울문화마을', dur: 180, leg: 10, taxi: 6200 },
+    { t: '14:37', zh: '白淺灘文化村', naver: 'https://naver.me/F93DmOl2', ko: '흰여울문화마을', dur: 180, leg: 10, taxi: 6200 },
     { t: '17:37', zh: 'Aether', naver: 'https://naver.me/GrgnBgcC', ko: '에테르', addr: '부산 영도구 절영로 234', hours: '每日 10:00–21:00', dur: 0, won: 20000 },
     { t: '18:01', zh: '扎嘎其市場', naver: 'https://naver.me/5FDTgY6J', ko: '자갈치시장', dur: 90, leg: 18, won: 60000, taxi: 7900 },
     { t: '19:47', zh: '回 Airbnb', ko: '', dur: 0, leg: 12, taxi: 5100 }
+  ] };
+  DAYS[3].rain = { headline: '海東龍宮寺 · 樂天世界 · 定食 · Outlet', stops: [
+    { t: '09:00', zh: 'Airbnb 出發', ko: '', dur: 0 },
+    { t: '10:18', zh: '海東龍宮寺', naver: 'https://naver.me/FYrdAhTZ', ko: '해동용궁사', addr: '부산 기장군 기장읍 용궁길 86', dur: 120, leg: 60, taxi: 30000 },
+    { t: '12:25', zh: '元祖稻草燒鰻魚', naver: 'https://naver.me/FRo4rdKu', ko: '원조짚불곰장어 기장외가집', addr: '부산광역시 기장군 기장읍 공윘2길 5-1', dur: 60, leg: 5, won: 30000, taxi: 6000 },
+    { t: '13:32', zh: '釜山樂天世界樂園', naver: 'https://naver.me/GYDJZ7sX', ko: '롯데월드 어드벤처 부산', addr: '부산 기장군 기장읍 동부산관광로 42', dur: 240, leg: 5, won: 49000 },
+    { t: '17:32', zh: '韓式定食', naver: 'https://naver.me/xuFnefAC', ko: '풍원장-시골밥상집', addr: '부산 기장군 기장읍 기장해안로 250', dur: 60, leg: 0 },
+    { t: '18:39', zh: 'Lotte Premium Outlet 東釜山店', naver: 'https://naver.me/Fc6MGLTZ', ko: '롯데프리미엄아울렛 동부산점', dur: 120, leg: 5 },
+    { t: '21:44', zh: '回 Airbnb', ko: '', dur: 0, leg: 50, taxi: 26000 }
   ] };
 
   // Every 'leg' above is a bare door-to-door estimate. Real trips run long, so
@@ -349,15 +351,20 @@
     if (d.rain) stampTimes(d.rain.stops);
   });
 
+  // Pass coverage is computed from whichever plan is active, so an attraction
+  // the current mode doesn't visit can't be counted as a saving. 'match' is the
+  // prefix of the stop's zh name; 'fromStop' takes the price off the stop itself
+  // (松島纜車 differs between the two plans).
   var PASS = [
-    { name: '松島海上纜車', zone: '藍區', price: '₩19,000', big5: '✓', hr48: '✕', b5c: ACCENT, h48c: '#c0b8aa' },
-    { name: 'Skyline Luge', zone: '紫區', price: '₩34,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
-    { name: '釜山樂天世界樂園', zone: '紫區', price: '₩49,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
-    { name: '青沙浦（藍線公園）', zone: '藍區', price: '₩8,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
-    { name: 'Busan X the SKY', zone: '紫區', price: '₩29,000', big5: '✕', hr48: '✓', b5c: '#c0b8aa', h48c: ACCENT },
-    { name: 'MUSEUM 1', zone: '藍區', price: '₩18,000', big5: '✓', hr48: '✓', b5c: ACCENT, h48c: ACCENT },
-    { name: 'SPA Land Centum', zone: '紫區', price: '₩20,000', big5: '✕', hr48: '✓', b5c: '#c0b8aa', h48c: ACCENT }
+    { name: '松島海上纜車', match: '松島海上纜車', won: 19000, zone: '藍區', big5: true, hr48: false },
+    { name: 'Skyline Luge', match: 'Skyline Luge', won: 34000, zone: '紫區', big5: true, hr48: true },
+    { name: '釜山樂天世界樂園', match: '釜山樂天世界樂園', won: 49000, zone: '紫區', big5: true, hr48: true },
+    { name: '青沙浦（藍線公園）', match: '青沙浦', won: 8000, zone: '藍區', big5: true, hr48: true },
+    { name: 'Busan X the SKY', match: 'Busan X the SKY', won: 29000, zone: '紫區', big5: true, hr48: true },
+    { name: 'MUSEUM 1', match: 'MUSEUM 1', won: 18000, zone: '藍區', big5: true, hr48: true },
+    { name: 'SPA Land Centum', match: 'SPA Land Centum', won: 20000, zone: '紫區', big5: false, hr48: true }
   ];
+  var PASS_PRICE = { big5: 65000, hr48: 85000 };
 
   var TAB_LABELS = ['總覽', 'Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', '換算', '預算', '打包'];
 
@@ -408,6 +415,14 @@
 
   // ---- derived view model -------------------------------------------------
   var days, tripTotal, sights, transport, airport, saveBig5, save48, BUDGET, grand48, grandBig5;
+  var passRows, coverBig5, cover48, saveBig5Won, save48Won, h48pick, win48, b5over;
+
+  // 8/16 is day 0 on the absolute clock the 48hr window is measured against.
+  function stamp48(m) {
+    var d = Math.floor(m / 1440), r = m % 1440;
+    var hh = Math.floor(r / 60), mm = r % 60;
+    return '8/' + (16 + d) + ' ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+  }
 
   // Every figure on the page derives from RATE, so a new rate means re-running
   // this and repainting rather than patching numbers in place.
@@ -495,15 +510,95 @@
   sights = days.reduce(function (a, d) { return a + d.spend; }, 0);
   transport = days.reduce(function (a, d) { return a + d.fares; }, 0);
   airport = (36000 / SPLIT) * RATE;
-  saveBig5 = 63000 * RATE;
-  save48 = 73000 * RATE;
+
+  // Which pass attractions the active plan actually visits, at the price that
+  // plan charges for them.
+  var seen = {};
+  DAYS.forEach(function (d) {
+    var ps = (rainMode && d.rain) ? d.rain : d;
+    ps.stops.forEach(function (s) {
+      PASS.forEach(function (p) {
+        if (!s.zh || s.zh.indexOf(p.match) !== 0) return;
+        // A second matching stop without a price (a cable car's far station)
+        // must not clobber the priced one.
+        if (p.fromStop && s.won) seen[p.name] = s.won;
+        else if (!Object.prototype.hasOwnProperty.call(seen, p.name)) seen[p.name] = p.won;
+      });
+    });
+  });
+  // Big 5 is 2 purple + 3 blue, not any five, so each zone is picked separately
+  // from the dearest the active plan visits. Anything past a zone's quota is
+  // outside the quota and earns nothing.
+  var b5pick = {};
+  b5over = 0;
+  [['紫區', 2], ['藍區', 3]].forEach(function (q) {
+    var elig = PASS.filter(function (p) { return p.big5 && seen[p.name] && p.zone === q[0]; })
+      .sort(function (a, b) { return seen[b.name] - seen[a.name]; });
+    elig.slice(0, q[1]).forEach(function (p) { b5pick[p.name] = true; });
+    b5over += Math.max(0, elig.length - q[1]);
+  });
+  // The 48hr pass runs 48 hours from first use, so only the visits inside one
+  // window can count. Every eligible visit is timed on an absolute clock and
+  // the best 48-hour window starting at one of them wins.
+  var visits = [], taken = {};
+  DAYS.forEach(function (d, di) {
+    var ps = (rainMode && d.rain) ? d.rain : d;
+    var cur = 0;
+    ps.stops.forEach(function (s, i) {
+      if (i === 0) {
+        var q = s.t.split(':');
+        cur = (+q[0]) * 60 + (+q[1]);
+      } else {
+        cur += (ps.stops[i - 1].dur || 0) + (ps.stops[i - 1].hold || 0) + legMin(s);
+      }
+      PASS.forEach(function (p) {
+        if (!p.hr48 || !seen[p.name] || taken[p.name]) return;
+        if (!s.zh || s.zh.indexOf(p.match) !== 0) return;
+        taken[p.name] = true;
+        visits.push({ name: p.name, at: di * 1440 + cur, won: seen[p.name] });
+      });
+    });
+  });
+  visits.sort(function (a, b) { return a.at - b.at; });
+  var best = { sum: 0, names: {}, start: null };
+  visits.forEach(function (v0) {
+    var end = v0.at + 2880, sum = 0, names = {};
+    visits.forEach(function (v) {
+      if (v.at >= v0.at && v.at < end) { sum += v.won; names[v.name] = true; }
+    });
+    if (sum > best.sum) best = { sum: sum, names: names, start: v0.at };
+  });
+  cover48 = best.sum;
+  h48pick = best.names;
+  win48 = best.start == null ? '' : stamp48(best.start) + ' → ' + stamp48(best.start + 2880);
+
+  passRows = PASS.filter(function (p) {
+    return Object.prototype.hasOwnProperty.call(seen, p.name);
+  }).map(function (p) {
+    var over = p.big5 && !b5pick[p.name];
+    var late = p.hr48 && !h48pick[p.name];
+    return {
+      name: p.name, zone: p.zone, over: over, late: late,
+      price: won(seen[p.name]),
+      big5: p.big5 ? '✓' : '✕',
+      hr48: p.hr48 ? '✓' : '✕',
+      b5c: (p.big5 && !over) ? ACCENT : '#c0b8aa',
+      h48c: (p.hr48 && !late) ? ACCENT : '#c0b8aa'
+    };
+  });
+  coverBig5 = PASS.reduce(function (a, p) { return a + (b5pick[p.name] ? seen[p.name] : 0); }, 0);
+
+  saveBig5Won = Math.max(0, coverBig5 - PASS_PRICE.big5);
+  save48Won = Math.max(0, cover48 - PASS_PRICE.hr48);
+  saveBig5 = saveBig5Won * RATE;
+  save48 = save48Won * RATE;
 
   BUDGET = [
     { label: '門票・餐食・購物', note: '四天各站花費', value: nt(sights), color: '#23201c' },
     { label: '市區交通（計程車）', note: '每趟 2 台 ÷ 6 人', value: nt(transport), color: '#23201c' },
     { label: '機場接送', note: '₩18,000 × 2 台 × 2 趟', value: '+ ' + nt(airport), color: '#23201c' },
-    { label: '釜山 Pass 折抵（48hr）', note: '省 ₩73,000', value: '− ' + nt(save48), color: ACCENT },
-    { label: '釜山 Pass 折抵（Big 5）', note: '省 ₩63,000', value: '− ' + nt(saveBig5), color: '#6d675e', muted: true }
+    { label: '釜山 Pass 折抵（48hr）', note: '省 ' + won(save48Won), value: '− ' + nt(save48), color: ACCENT },
+    { label: '釜山 Pass 折抵（Big 5）', note: '省 ' + won(saveBig5Won), value: '− ' + nt(saveBig5), color: '#6d675e', muted: true }
   ];
   grand48 = nt(tripTotal + airport - save48);
   grandBig5 = nt(tripTotal + airport - saveBig5);
@@ -693,12 +788,12 @@
   }
 
   function passBlock() {
-    var rows = PASS.map(function (p) {
+    var rows = passRows.map(function (p) {
       return '' +
         '<div style="display: grid; grid-template-columns: 1fr 76px 44px 44px; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid #e7e3da;">' +
           '<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">' +
             '<div style="font-size: 14px; line-height: 1.3;">' + esc(p.name) + '</div>' +
-            '<div style="font-size: 11px; color: #8a8378;">' + esc(p.zone) + '</div>' +
+            '<div style="font-size: 11px; color: #8a8378;">' + esc(p.zone) + [p.over ? 'Big 5 額度外' : '', p.late ? '48hr 期外' : ''].filter(Boolean).map(function (x) { return ' · ' + x; }).join('') + '</div>' +
           '</div>' +
           '<div style="text-align: right; font-size: 14px;">' + esc(p.price) + '</div>' +
           '<div style="text-align: center; font-size: 13px; color: ' + p.b5c + ';">' + esc(p.big5) + '</div>' +
@@ -726,18 +821,19 @@
           '<div style="color: #8a8378; font-size: 11px; letter-spacing: 0.06em; text-align: right;">BIG 5</div>' +
           '<div style="color: #8a8378; font-size: 11px; letter-spacing: 0.06em; text-align: right;">48HR</div>' +
           '<div>涵蓋景點原價</div>' +
-          '<div style="text-align: right;">₩128,000</div>' +
-          '<div style="text-align: right;">₩158,000</div>' +
+          '<div style="text-align: right;">' + esc(won(coverBig5)) + '</div>' +
+          '<div style="text-align: right;">' + esc(won(cover48)) + '</div>' +
           '<div>Pass 售價</div>' +
-          '<div style="text-align: right;">₩65,000</div>' +
-          '<div style="text-align: right;">₩85,000</div>' +
+          '<div style="text-align: right;">' + esc(won(PASS_PRICE.big5)) + '</div>' +
+          '<div style="text-align: right;">' + esc(won(PASS_PRICE.hr48)) + '</div>' +
           '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px;">省下</div>' +
-          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">₩63,000</div>' +
-          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">₩73,000</div>' +
+          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">' + esc(won(saveBig5Won)) + '</div>' +
+          '<div style="border-top: 1px solid #ddd8ce; padding-top: 9px; text-align: right; font-weight: 600;">' + esc(won(save48Won)) + '</div>' +
           '<div>約合每人</div>' +
           '<div style="text-align: right; font-weight: 600;">' + esc(nt(saveBig5)) + '</div>' +
           '<div style="text-align: right; font-weight: 600;">' + esc(nt(save48)) + '</div>' +
         '</div>' +
+        '<div class="addr" style="font-size: 11px; line-height: 1.6; color: #8a8378;">Big 5 為紫區 2 項 + 藍區 3 項，上表按本行程各區最貴的項目計算' + (b5over ? '，另 ' + b5over + ' 項在額度外' : '') + '。48hr 券自首次使用起連續 48 小時，僅計入同一時段內的景點' + (win48 ? '（最佳時段 ' + esc(win48) + '）' : '') + '。</div>' +
       '</div>';
   }
 
